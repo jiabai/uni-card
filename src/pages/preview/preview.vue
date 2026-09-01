@@ -10,24 +10,7 @@
     </view>
 
     <view class="card-scale" :style="{ transform: `scale(${scale})` }">
-      <!-- 票根便签卡 -->
-      <uni-ticket-card
-        v-if="templateId === 'ticket'"
-        :date="fields.date"
-        :author="fields.author"
-        :total-memos="fields.totalMemos"
-        :total-days="fields.totalDays"
-        :content="fields.content"
-      />
-      <!-- 流光卡片 -->
-      <uni-glow-card
-        v-else
-        :title="fields.title"
-        :date="fields.date"
-        :content="fields.content"
-        :sign="fields.sign"
-        :qr-text="fields.qrText"
-      />
+      <card-renderer :template-id="templateId" :fields="fields" />
     </view>
 
     <!-- 底部操作栏：生成分享图（canvas 重绘 → 跳展示页长按转发/保存） -->
@@ -51,6 +34,7 @@ import { getTemplate } from '../../lib/templates.js'
 import { upsertMemo } from '../../lib/memos.js'
 import { exportCardImage } from '../../lib/card-export.js'
 import { getTopbarStyle } from '../../lib/navbar.js'
+import CardRenderer from '../../components/card-renderer.vue'
 
 // 自定义导航栏：统一度量（reserveRight=false，本页右侧无自定义控件，标题保持屏幕居中）
 const topbarStyle = getTopbarStyle(false)

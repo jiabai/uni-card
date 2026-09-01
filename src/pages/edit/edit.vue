@@ -14,55 +14,29 @@
 
     <!-- 内容输入区（无卡片预览，纯文本心智） -->
     <view class="editor">
-      <!-- 票根卡字段 -->
-      <template v-if="currentId === 'ticket'">
-        <view class="field">
-          <text class="f-label">正文 CONTENT（换行分段落；每段「：」前自动加粗）</text>
-          <textarea class="f-textarea" v-model="drafts.ticket.content" auto-height placeholder="每行一段" />
+      <view v-for="(row, rowIndex) in editorRows" :key="rowIndex" class="field-row">
+        <view
+          v-for="field in row"
+          :key="field.key"
+          class="field"
+          :class="row.length > 1 ? 'half' : 'full'"
+        >
+          <text class="f-label">{{ field.label }}</text>
+          <textarea
+            v-if="field.type === 'textarea'"
+            v-model="drafts[currentId][field.key]"
+            class="f-textarea"
+            auto-height
+            :placeholder="field.placeholder"
+          />
+          <input
+            v-else
+            v-model="drafts[currentId][field.key]"
+            class="f-input"
+            :placeholder="field.placeholder"
+          />
         </view>
-        <view class="field">
-          <text class="f-label">DATE</text>
-          <input class="f-input" v-model="drafts.ticket.date" placeholder="如 28 / 8, 2026" />
-        </view>
-        <view class="field">
-          <text class="f-label">BY / author</text>
-          <input class="f-input" v-model="drafts.ticket.author" placeholder="如 你的昵称" />
-        </view>
-        <view class="field-row">
-          <view class="field half">
-            <text class="f-label">TOTAL MEMOS</text>
-            <input class="f-input" v-model="drafts.ticket.totalMemos" placeholder="如 421" />
-          </view>
-          <view class="field half">
-            <text class="f-label">TOTAL DAYS</text>
-            <input class="f-input" v-model="drafts.ticket.totalDays" placeholder="如 1841" />
-          </view>
-        </view>
-      </template>
-
-      <!-- 流光卡字段 -->
-      <template v-else>
-        <view class="field">
-          <text class="f-label">正文 CONTENT（换行分段落；含 💡 的段落高亮为小标题）</text>
-          <textarea class="f-textarea" v-model="drafts.glow.content" auto-height placeholder="每行一段" />
-        </view>
-        <view class="field">
-          <text class="f-label">标题 title</text>
-          <input class="f-input" v-model="drafts.glow.title" placeholder="卡片标题" />
-        </view>
-        <view class="field">
-          <text class="f-label">日期 date</text>
-          <input class="f-input" v-model="drafts.glow.date" placeholder="如 2026.8.28" />
-        </view>
-        <view class="field">
-          <text class="f-label">署名 sign</text>
-          <input class="f-input" v-model="drafts.glow.sign" placeholder="署名" />
-        </view>
-        <view class="field">
-          <text class="f-label">二维码扫码内容 qrText</text>
-          <input class="f-input" v-model="drafts.glow.qrText" placeholder="留空则不显示二维码" />
-        </view>
-      </template>
+      </view>
 
       <view class="editor-foot">
         <text class="foot-hint">修改自动保存，随时回来继续。</text>
@@ -80,7 +54,7 @@
 <script setup>
 import { ref, computed, watch, getCurrentInstance } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
-import { ticketConfig as defTicket, glowConfig as defGlow } from '../../config.js'
+import { TEMPLATE_EDITOR_ROWS, createDefaultDrafts, getDefaultConfig } from '../../config.js'
 import { getTemplate } from '../../lib/templates.js'
 import { loadDrafts as loadDraftsSaved, saveDrafts, setBoundMemoId } from '../../lib/storage.js'
 import { getTopbarStyle } from '../../lib/navbar.js'
@@ -103,6 +77,7 @@ const currentId = ref('ticket')
 
 const currentName = computed(() => getTemplate(currentId.value).name)
 const theme = computed(() => getTemplate(currentId.value).theme)
+const editorRows = computed(() => TEMPLATE_EDITOR_ROWS[currentId.value] || [])
 
 // 主题明暗（按亮度阈值判定）：深色主题下顶栏文字换浅色
 const isDarkTheme = computed(() => {
@@ -121,16 +96,7 @@ onLoad((options) => {
 })
 
 function loadLocalDrafts() {
-  const defaults = {
-    ticket: { ...defTicket },
-    glow: { ...defGlow },
-  }
-  const saved = loadDraftsSaved()
-  if (saved) {
-    defaults.ticket = { ...defaults.ticket, ...saved.ticket }
-    defaults.glow = { ...defaults.glow, ...saved.glow }
-  }
-  return defaults
+  return createDefaultDrafts(loadDraftsSaved())
 }
 
 // 深监听：草稿变化自动持久化（草稿记忆，中断恢复无损失）
@@ -154,7 +120,7 @@ function resetConfig() {
       if (!res.confirm) return
       drafts.value = {
         ...drafts.value,
-        [id]: id === 'ticket' ? { ...defTicket } : { ...defGlow },
+        [id]: getDefaultConfig(id),
       }
       setBoundMemoId(id, null)
     },
@@ -251,7 +217,8 @@ async function onShareTap() {
   display: flex;
   gap: 12px;
 }
-.field.half {
+.field.half,
+.field.full {
   flex: 1;
 }
 .f-label {
