@@ -387,20 +387,21 @@ const WAVE = {
   minH: 896,
   bg: '#f66b61',
   pageBg: '#f66b61',
-  frameX: 47,
-  frameY: 334,
-  frameW: 386,
-  frameMinH: 224,
+  frameX: 45,
+  frameY: 332,
+  frameW: 390,
+  frameMinH: 226,
   frameBottom: 338,
   framePadX: 22,
   framePadY: 30,
   frameRadius: 18,
   frameLine: 4,
-  titleSize: 42,
-  titleLH: 50,
-  bodySize: 29,
-  bodyLH: 34,
+  titleSize: 38,
+  titleLH: 46,
+  bodySize: 31,
+  bodyLH: 32,
   titleBodyGap: 2,
+  textOffsetY: -6,
 }
 
 const WAVE_FONT = 'Georgia, "Times New Roman", "Songti SC", serif'
@@ -462,7 +463,8 @@ function paintWave(ctx, fields, imgs, draw) {
   ctx.stroke()
   ctx.restore()
 
-  const blockTop = layout.frameY + (layout.frameHeight - layout.blockHeight) / 2
+  const blockTop =
+    layout.frameY + (layout.frameHeight - layout.blockHeight) / 2 + WAVE.textOffsetY
   ctx.textAlign = 'center'
   ctx.textBaseline = 'alphabetic'
   ctx.fillStyle = '#fffaf0'

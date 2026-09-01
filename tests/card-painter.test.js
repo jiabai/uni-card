@@ -24,10 +24,11 @@ describe('流线渐变卡 painter', () => {
     expect(painter.measureWaveLayout(measureCtx, waveConfig)).toMatchObject({
       width: 480,
       height: 896,
-      frameX: 47,
-      frameY: 334,
-      frameWidth: 386,
-      frameHeight: 224,
+      frameX: 45,
+      frameY: 332,
+      frameWidth: 390,
+      frameHeight: 226,
+      blockHeight: 144,
       titleLines: ['Lorem Ipsum'],
       contentLines: [
         'is simply dummy text',
