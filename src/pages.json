@@ -3,7 +3,8 @@
 		"autoscan": true,
 		"custom": {
 			"^uni-glow-card$": "@/uni_modules/uni-glow-card/components/uni-glow-card/uni-glow-card.vue",
-			"^uni-ticket-card$": "@/uni_modules/uni-ticket-card/components/uni-ticket-card/uni-ticket-card.vue"
+			"^uni-ticket-card$": "@/uni_modules/uni-ticket-card/components/uni-ticket-card/uni-ticket-card.vue",
+			"^uni-wave-card$": "@/uni_modules/uni-wave-card/components/uni-wave-card/uni-wave-card.vue"
 		}
 	},
 	"pages": [
