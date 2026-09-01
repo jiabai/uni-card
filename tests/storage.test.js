@@ -128,10 +128,10 @@ describe('用户设置（unicard_mine）', () => {
   })
 
   it('mine 其余字段在模板 id 写入时保留', () => {
-    store.set('unicard_mine', { nickname: 'Aaron', lastTemplateId: 'ticket', statsOn: true })
+    store.set('unicard_mine', { nickname: '测试昵称', lastTemplateId: 'ticket', statsOn: true })
     storage.setLastTemplateId('glow')
     const mine = store.get('unicard_mine')
-    expect(mine.nickname).toBe('Aaron')
+    expect(mine.nickname).toBe('测试昵称')
     expect(mine.statsOn).toBe(true)
     expect(mine.lastTemplateId).toBe('glow')
   })

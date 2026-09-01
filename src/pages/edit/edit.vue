@@ -26,7 +26,7 @@
         </view>
         <view class="field">
           <text class="f-label">BY / author</text>
-          <input class="f-input" v-model="drafts.ticket.author" placeholder="如 Aaron" />
+          <input class="f-input" v-model="drafts.ticket.author" placeholder="如 你的昵称" />
         </view>
         <view class="field-row">
           <view class="field half">

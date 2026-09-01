@@ -26,13 +26,13 @@ easycom 会自动按标签引入（前提是已在 `pages.json` 的 easycom.cust
 ```html
 <uni-ticket-card
   date="07 / 11, 2026"
-  author="Aaron"
+  author="你的昵称"
   total-memos="421"
   total-days="1841"
-  content="初入职场：IC，独立贡献者，执行人，上级分配什么工作就做什么工作
-阿里期间：技术DRI，Directly Responsible Individual(直接责任人)，主要架构思维，工程标准
-暴风期间：配合产品负责人，DRI，同时配合产品进行对业务的洞察
-明略期间：对业务的洞察，对需求的取舍，对方向的判断，全都包括"
+  content="初来乍到：个人开发者，利用业余时间做点小工具
+产品设计：从用户视角出发，把复杂的事情变简单
+技术实现：关注工程标准，追求性能与稳定
+长期主义：相信积累的力量，持续打磨每一个细节"
 />
 ```
 
@@ -44,7 +44,7 @@ easycom 会自动按标签引入（前提是已在 `pages.json` 的 easycom.cust
 | ------------- | --------------- | ------- | -------------------------------------------------------------------- |
 | `content`     | String          | `''`    | 正文。`\n` 换行；每段「：」或「:」前的文字会自动加粗为小标题          |
 | `date`        | String          | `''`    | DATE 字段值，例如 `"07 / 11, 2026"`                                  |
-| `author`      | String          | `''`    | BY 字段值，例如 `"Aaron"`                                            |
+| `author`      | String          | `''`    | BY 字段值，例如 `"你的昵称"`                                         |
 | `totalMemos`  | String / Number | `'0'`   | TOTAL 左侧的 MEMOS 数量，例如 `"421"`                                |
 | `totalDays`   | String / Number | `'0'`   | TOTAL 右侧的 DAYS 天数，例如 `"1841"`                                |
 

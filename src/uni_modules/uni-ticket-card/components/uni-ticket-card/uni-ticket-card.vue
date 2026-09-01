@@ -75,7 +75,7 @@ const props = defineProps({
     type: String,
     default: '',
   },
-  /** BY 字段值，例如 "Aaron" */
+  /** BY 字段值，例如 "你的昵称" */
   author: {
     type: String,
     default: '',
