@@ -25,6 +25,7 @@ dist
 
 # Local scratch / temp
 .scratch/
+.worktrees/
 
 # Local test & asset outputs (backup images, verification PNGs, logs)
 outputs/
