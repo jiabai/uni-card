@@ -17,6 +17,7 @@ const PAGE_PAD = 24 // 导出图四周留边（页面背景色）
 const ASSETS = {
   scribble: '/static/ticket-scribble.png',
   barcode: '/static/ticket-barcode.png',
+  waveBg: '/static/wave-card-bg.png',
   // 流光卡片自行车图标：内联 base64，走 canvas.createImage(dataURL) 直载，
   // 规避小程序 uni.getImageInfo 本地路径在部分机型/基础库下静默失败 → 自行车消失。
   icon: GLOW_BICYCLE_ICON,
@@ -379,6 +380,110 @@ function paintGlow(ctx, fields, imgs, draw) {
   return height
 }
 
+/* ---------- 流线渐变卡 ---------- */
+
+const WAVE = {
+  w: 480,
+  minH: 896,
+  bg: '#f66b61',
+  pageBg: '#f66b61',
+  frameX: 47,
+  frameY: 334,
+  frameW: 386,
+  frameMinH: 224,
+  frameBottom: 338,
+  framePadX: 22,
+  framePadY: 30,
+  frameRadius: 18,
+  frameLine: 4,
+  titleSize: 42,
+  titleLH: 50,
+  bodySize: 29,
+  bodyLH: 34,
+  titleBodyGap: 2,
+}
+
+const WAVE_FONT = 'Georgia, "Times New Roman", "Songti SC", serif'
+
+function waveTextLines(ctx, text, maxWidth) {
+  return String(text || '')
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .flatMap((line) => wrapRich(ctx, line, maxWidth))
+}
+
+export function measureWaveLayout(ctx, fields) {
+  const textWidth = WAVE.frameW - WAVE.framePadX * 2
+  setFont(ctx, 700, WAVE.titleSize, WAVE_FONT)
+  const titleLines = waveTextLines(ctx, fields.title, textWidth)
+  setFont(ctx, 400, WAVE.bodySize, WAVE_FONT)
+  const contentLines = waveTextLines(ctx, fields.content, textWidth)
+  const blockHeight =
+    titleLines.length * WAVE.titleLH +
+    (titleLines.length && contentLines.length ? WAVE.titleBodyGap : 0) +
+    contentLines.length * WAVE.bodyLH
+  const frameHeight = Math.max(WAVE.frameMinH, blockHeight + WAVE.framePadY * 2)
+  const height = Math.max(WAVE.minH, WAVE.frameY + frameHeight + WAVE.frameBottom)
+  return {
+    width: WAVE.w,
+    height,
+    frameX: WAVE.frameX,
+    frameY: WAVE.frameY,
+    frameWidth: WAVE.frameW,
+    frameHeight,
+    blockHeight,
+    titleLines,
+    contentLines,
+  }
+}
+
+function paintWave(ctx, fields, imgs, draw) {
+  const layout = measureWaveLayout(ctx, fields)
+  if (!draw) return layout.height
+
+  ctx.fillStyle = WAVE.bg
+  ctx.fillRect(0, 0, WAVE.w, layout.height)
+  if (imgs.waveBg) {
+    ctx.drawImage(imgs.waveBg, 0, 0, WAVE.w, layout.height)
+  }
+
+  ctx.save()
+  ctx.strokeStyle = 'rgba(255, 250, 240, 0.96)'
+  ctx.lineWidth = WAVE.frameLine
+  roundRect(
+    ctx,
+    layout.frameX,
+    layout.frameY,
+    layout.frameWidth,
+    layout.frameHeight,
+    WAVE.frameRadius
+  )
+  ctx.stroke()
+  ctx.restore()
+
+  const blockTop = layout.frameY + (layout.frameHeight - layout.blockHeight) / 2
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'alphabetic'
+  ctx.fillStyle = '#fffaf0'
+
+  setFont(ctx, 700, WAVE.titleSize, WAVE_FONT)
+  let y = blockTop
+  for (const line of layout.titleLines) {
+    ctx.fillText(line, WAVE.w / 2, y + WAVE.titleSize)
+    y += WAVE.titleLH
+  }
+
+  if (layout.titleLines.length && layout.contentLines.length) y += WAVE.titleBodyGap
+  setFont(ctx, 400, WAVE.bodySize, WAVE_FONT)
+  for (const line of layout.contentLines) {
+    ctx.fillText(line, WAVE.w / 2, y + WAVE.bodySize)
+    y += WAVE.bodyLH
+  }
+  ctx.textAlign = 'left'
+  return layout.height
+}
+
 function roundRect(ctx, x, y, w, h, r) {
   ctx.beginPath()
   ctx.moveTo(x + r, y)
@@ -391,6 +496,39 @@ function roundRect(ctx, x, y, w, h, r) {
 
 /* ---------- 对外入口 ---------- */
 
+const PAINTERS = {
+  ticket: {
+    width: T.w,
+    pageBg: T.pageBg,
+    painter: paintTicket,
+    assets: ['scribble', 'barcode'],
+    requiredAssets: [],
+  },
+  glow: {
+    width: G.w,
+    pageBg: G.pageBg,
+    painter: paintGlow,
+    assets: ['icon'],
+    requiredAssets: [],
+  },
+  wave: {
+    width: WAVE.w,
+    pageBg: WAVE.pageBg,
+    painter: paintWave,
+    assets: ['waveBg'],
+    requiredAssets: ['waveBg'],
+  },
+}
+
+function getPainterEntry(templateId) {
+  return PAINTERS[templateId] || PAINTERS.ticket
+}
+
+export function getPainterSpec(templateId) {
+  const entry = getPainterEntry(templateId)
+  return { width: entry.width, pageBg: entry.pageBg }
+}
+
 /**
  * 绘制整卡导出图（含页面背景与四周留边）。
  * canvas：2d 上下文画布（MP 节点画布或 H5 离屏画布）。
@@ -398,7 +536,7 @@ function roundRect(ctx, x, y, w, h, r) {
  */
 export async function paintCard(canvas, templateId, fields) {
   const imgs = {}
-  const need = templateId === 'ticket' ? ['scribble', 'barcode'] : ['icon']
+  const entry = getPainterEntry(templateId)
 
   // 流光卡片：预先把二维码文本转成 base64 PNG 并加载成 image 对象
   if (templateId === 'glow' && fields.qrText) {
@@ -419,15 +557,17 @@ export async function paintCard(canvas, templateId, fields) {
   }
 
   await Promise.all(
-    need.map((k) =>
-      loadImage(canvas, ASSETS[k])
-        .then((img) => (imgs[k] = img))
-        .catch(() => {})
-    )
+    entry.assets.map(async (key) => {
+      try {
+        imgs[key] = await loadImage(canvas, ASSETS[key])
+      } catch (error) {
+        if (entry.requiredAssets.includes(key)) throw error
+      }
+    })
   )
 
   const ctx = canvas.getContext('2d')
-  const painter = templateId === 'ticket' ? paintTicket : paintGlow
+  const painter = entry.painter
 
   // 第一遍：measure（临时大画布尺寸）
   canvas.width = 2048
@@ -436,20 +576,19 @@ export async function paintCard(canvas, templateId, fields) {
   ctx.textBaseline = 'alphabetic'
   const logicalH = painter(ctx, fields, imgs, false)
 
-  const W = (templateId === 'ticket' ? T.w : G.w) + PAGE_PAD * 2
+  const outputWidth = entry.width + PAGE_PAD * 2
   const H = logicalH + PAGE_PAD * 2
   if (H * SCALE > 4096) return { overflow: true }
 
   // 第二遍：正式尺寸落笔（重设尺寸清空画布，重置 transform）
-  canvas.width = W * SCALE
+  canvas.width = outputWidth * SCALE
   canvas.height = H * SCALE
   ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0)
   ctx.textBaseline = 'alphabetic'
 
   // 页面背景
-  const pageBg = templateId === 'ticket' ? T.pageBg : G.pageBg
-  ctx.fillStyle = pageBg
-  ctx.fillRect(0, 0, W, H)
+  ctx.fillStyle = entry.pageBg
+  ctx.fillRect(0, 0, outputWidth, H)
 
   // 卡片平移到留边内绘制
   ctx.translate(PAGE_PAD, PAGE_PAD)
