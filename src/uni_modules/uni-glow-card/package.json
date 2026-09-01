@@ -1,0 +1,21 @@
+{
+  "id": "uni-glow-card",
+  "displayName": "流れる光カード - 流光卡片",
+  "version": "1.0.0",
+  "description": "流光风格的内容卡片组件（uni-app Vue3）。支持中日文自动识别字体、正文分块与 💡 高亮小标题、底部二维码自动生成。",
+  "keywords": [
+    "glow",
+    "card",
+    "卡片",
+    "流光",
+    "uni-app",
+    "vue3",
+    "component"
+  ],
+  "uni_modules": {
+    "dependencies": {}
+  },
+  "dependencies": {
+    "qrcode": "^1.5.4"
+  }
+}

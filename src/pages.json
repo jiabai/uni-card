@@ -1,0 +1,49 @@
+{
+	"easycom": {
+		"autoscan": true,
+		"custom": {
+			"^uni-glow-card$": "@/uni_modules/uni-glow-card/components/uni-glow-card/uni-glow-card.vue",
+			"^uni-ticket-card$": "@/uni_modules/uni-ticket-card/components/uni-ticket-card/uni-ticket-card.vue"
+		}
+	},
+	"pages": [
+		{
+			"path": "pages/index/index",
+			"style": {
+				"navigationStyle": "custom",
+				"navigationBarTitleText": "选一张卡片",
+				"backgroundColor": "#efeadf"
+			}
+		},
+		{
+			"path": "pages/edit/edit",
+			"style": {
+				"navigationStyle": "custom",
+				"navigationBarTitleText": "写卡片",
+				"backgroundColor": "#e6e1d3"
+			}
+		},
+		{
+			"path": "pages/preview/preview",
+			"style": {
+				"navigationStyle": "custom",
+				"navigationBarTitleText": "分享卡片",
+				"backgroundColor": "#e6e1d3"
+			}
+		},
+		{
+			"path": "pages/share/share",
+			"style": {
+				"navigationStyle": "custom",
+				"navigationBarTitleText": "分享图片",
+				"backgroundColor": "#141a22"
+			}
+		}
+	],
+	"globalStyle": {
+		"navigationBarTextStyle": "black",
+		"navigationBarTitleText": "选一张卡片",
+		"navigationBarBackgroundColor": "#efeadf",
+		"backgroundColor": "#efeadf"
+	}
+}

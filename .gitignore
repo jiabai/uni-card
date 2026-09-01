@@ -1,0 +1,34 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+.DS_Store
+dist
+*.local
+
+# Editor directories and files
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# WorkBuddy project data (memory, notes)
+.workbuddy/
+
+# Local scratch / temp
+.scratch/
+
+# Local test & asset outputs (backup images, verification PNGs, logs)
+outputs/
+backups/
+
+# WeChat DevTools private per-machine config
+project.private.config.json
