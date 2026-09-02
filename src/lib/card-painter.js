@@ -23,28 +23,60 @@ const ASSETS = {
   icon: GLOW_BICYCLE_ICON,
 }
 
+const SCHEME_RE = /^[a-z][a-z0-9+.-]*:\/\//i
+
+/**
+ * 把「包内相对路径」还原成小程序根绝对路径。
+ *
+ * 实测（开发者工具 3.16.2）：
+ *   wx.getImageInfo({ src: '/static/wave-card-bg.png' })
+ *     → res.path === 'static/wave-card-bg.png'   ← 前导斜杠被去掉
+ * 这个相对路径交给 canvas 2d 的 Image 会按「当前页面目录」解析：
+ *   pages/edit/static/wave-card-bg.png → 请求 404/500 → 图片加载失败。
+ * 真机返回的临时路径（wxfile:// 等）不含 static 段，会原样返回。
+ */
+export function normalizeImageInfoPath(path) {
+  if (typeof path !== 'string' || !path) return path
+  const staticIndex = path.indexOf('static/')
+  if (staticIndex === -1) return path
+  if (path.startsWith('/pages/')) return path.slice(staticIndex - 1) // /pages/x/static/y.png
+  if (path.startsWith('/') || SCHEME_RE.test(path)) return path // 已是根绝对路径 / 临时文件路径
+  if (staticIndex === 0) return '/' + path // static/y.png（开发者工具返回值）
+  if (path[staticIndex - 1] === '/') return path.slice(staticIndex - 1) // pages/x/static/y.png
+  return path
+}
+
+function createCanvasImage(canvas, src) {
+  return new Promise((resolve, reject) => {
+    const img = canvas.createImage()
+    img.onload = () => resolve(img)
+    img.onerror = (e) => reject(e || new Error('image load failed'))
+    img.src = src
+  })
+}
+
 function loadImage(canvas, src) {
   return new Promise((resolve, reject) => {
     // #ifdef MP-WEIXIN
+    // base64 / dataURL 可直接被 canvas 2d createImage 加载
     if (src && src.startsWith('data:')) {
-      // base64 / dataURL 可直接被 canvas 2d createImage 加载
-      const img = canvas.createImage()
-      img.onload = () => resolve(img)
-      img.onerror = (e) => reject(e || new Error('image load failed'))
-      img.src = src
+      createCanvasImage(canvas, src).then(resolve, reject)
       return
     }
-    // 本地 /static 路径在小程序 canvas 2d 中不能直接加载，
-    // 先通过 uni.getImageInfo 转成本地临时文件路径
-    uni.getImageInfo({
-      src,
-      success: (res) => {
-        const img = canvas.createImage()
-        img.onload = () => resolve(img)
-        img.onerror = (e) => reject(e || new Error('image load failed'))
-        img.src = res.path
-      },
-      fail: reject,
+    // 先用包内根绝对路径（/static/...）直接喂 canvas 2d：
+    // 开发者工具与新版基础库可直载，且不会触发上面那条被裁掉斜杠的 getImageInfo 路径。
+    // 真机上包内路径直载会失败，届时再退回 getImageInfo 转换后的本地路径。
+    createCanvasImage(canvas, src).then(resolve, () => {
+      uni.getImageInfo({
+        src,
+        success: (res) => {
+          createCanvasImage(canvas, normalizeImageInfoPath((res && res.path) || src)).then(
+            resolve,
+            reject
+          )
+        },
+        fail: reject,
+      })
     })
     // #endif
     // #ifndef MP-WEIXIN
@@ -516,6 +548,8 @@ const PAINTERS = {
   wave: {
     width: WAVE.w,
     pageBg: WAVE.pageBg,
+    // 流线背景是满版渐变；纯色留边会在静态 PNG 上形成矩形边框。
+    pagePad: 0,
     painter: paintWave,
     assets: ['waveBg'],
     requiredAssets: ['waveBg'],
@@ -578,8 +612,9 @@ export async function paintCard(canvas, templateId, fields) {
   ctx.textBaseline = 'alphabetic'
   const logicalH = painter(ctx, fields, imgs, false)
 
-  const outputWidth = entry.width + PAGE_PAD * 2
-  const H = logicalH + PAGE_PAD * 2
+  const pagePad = entry.pagePad ?? PAGE_PAD
+  const outputWidth = entry.width + pagePad * 2
+  const H = logicalH + pagePad * 2
   if (H * SCALE > 4096) return { overflow: true }
 
   // 第二遍：正式尺寸落笔（重设尺寸清空画布，重置 transform）
@@ -593,7 +628,7 @@ export async function paintCard(canvas, templateId, fields) {
   ctx.fillRect(0, 0, outputWidth, H)
 
   // 卡片平移到留边内绘制
-  ctx.translate(PAGE_PAD, PAGE_PAD)
+  ctx.translate(pagePad, pagePad)
   painter(ctx, fields, imgs, true)
 
   return { width: canvas.width, height: canvas.height, overflow: false }
