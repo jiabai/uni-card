@@ -20,13 +20,6 @@ export const TEMPLATES = [
     thumb: '/static/templates/glow-thumb.png',
     theme: '#111112',
   },
-  {
-    id: 'wave',
-    name: '流线渐变卡',
-    comp: 'uni-wave-card',
-    thumb: '/static/templates/wave-thumb.png',
-    theme: '#f66b61',
-  },
 ]
 
 export const DEFAULT_TEMPLATE_ID = 'ticket'

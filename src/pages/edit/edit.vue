@@ -26,6 +26,7 @@
             v-if="field.type === 'textarea'"
             v-model="drafts[currentId][field.key]"
             class="f-textarea"
+            maxlength="100000"
             auto-height
             :placeholder="field.placeholder"
           />
@@ -33,6 +34,7 @@
             v-else
             v-model="drafts[currentId][field.key]"
             class="f-input"
+            maxlength="100000"
             :placeholder="field.placeholder"
           />
         </view>

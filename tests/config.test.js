@@ -3,11 +3,10 @@ import * as configs from '../src/config.js'
 import { TEMPLATES } from '../src/lib/templates.js'
 
 describe('各模板默认内容配置（出厂示例）', () => {
-  it('票根卡配置含全部字段', () => {
+  it('票根卡配置仅含正文、DATE 和 BY', () => {
     expect(configs.ticketConfig).toHaveProperty('date')
     expect(configs.ticketConfig).toHaveProperty('author')
-    expect(configs.ticketConfig).toHaveProperty('totalMemos')
-    expect(configs.ticketConfig).toHaveProperty('totalDays')
+    expect(Object.keys(configs.ticketConfig).sort()).toEqual(['author', 'content', 'date'])
     expect(configs.ticketConfig).toHaveProperty('content')
   })
 
@@ -18,13 +17,6 @@ describe('各模板默认内容配置（出厂示例）', () => {
     expect(configs.glowConfig).toHaveProperty('sign')
     expect(configs.glowConfig).toHaveProperty('qrText')
     expect(typeof configs.glowConfig.qrText).toBe('string')
-  })
-
-  it('流线渐变卡配置复刻参考图文案', () => {
-    expect(configs.waveConfig).toEqual({
-      title: 'Lorem Ipsum',
-      content: 'is simply dummy text\nof the printing and\ntypesetting industry',
-    })
   })
 
   it('默认值映射与输入字段描述覆盖全部模板', () => {
@@ -42,9 +34,9 @@ describe('各模板默认内容配置（出厂示例）', () => {
   })
 
   it('创建草稿时逐模板合并存量且不共享对象', () => {
-    const drafts = configs.createDefaultDrafts({ wave: { title: '已改标题' } })
-    expect(drafts.wave.title).toBe('已改标题')
-    expect(drafts.wave.content).toBe(configs.waveConfig.content)
+    const drafts = configs.createDefaultDrafts({ glow: { title: '已改标题' } })
+    expect(drafts.glow.title).toBe('已改标题')
+    expect(drafts.glow.content).toBe(configs.glowConfig.content)
     expect(drafts.ticket).not.toBe(configs.ticketConfig)
     expect(drafts.glow).not.toBe(configs.glowConfig)
   })

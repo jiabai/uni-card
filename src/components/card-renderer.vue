@@ -3,8 +3,6 @@
     v-if="templateId === 'ticket'"
     :date="fields.date"
     :author="fields.author"
-    :total-memos="fields.totalMemos"
-    :total-days="fields.totalDays"
     :content="fields.content"
   />
   <uni-glow-card
@@ -14,11 +12,6 @@
     :content="fields.content"
     :sign="fields.sign"
     :qr-text="fields.qrText"
-  />
-  <uni-wave-card
-    v-else
-    :title="fields.title"
-    :content="fields.content"
   />
 </template>
 

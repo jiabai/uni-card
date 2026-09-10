@@ -17,7 +17,6 @@ const PAGE_PAD = 24 // 导出图四周留边（页面背景色）
 const ASSETS = {
   scribble: '/static/ticket-scribble.png',
   barcode: '/static/ticket-barcode.png',
-  waveBg: '/static/wave-card-bg.png',
   // 流光卡片自行车图标：内联 base64，走 canvas.createImage(dataURL) 直载，
   // 规避小程序 uni.getImageInfo 本地路径在部分机型/基础库下静默失败 → 自行车消失。
   icon: GLOW_BICYCLE_ICON,
@@ -29,10 +28,10 @@ const SCHEME_RE = /^[a-z][a-z0-9+.-]*:\/\//i
  * 把「包内相对路径」还原成小程序根绝对路径。
  *
  * 实测（开发者工具 3.16.2）：
- *   wx.getImageInfo({ src: '/static/wave-card-bg.png' })
- *     → res.path === 'static/wave-card-bg.png'   ← 前导斜杠被去掉
+ *   wx.getImageInfo({ src: '/static/ticket-scribble.png' })
+ *     → res.path === 'static/ticket-scribble.png'   ← 前导斜杠被去掉
  * 这个相对路径交给 canvas 2d 的 Image 会按「当前页面目录」解析：
- *   pages/edit/static/wave-card-bg.png → 请求 404/500 → 图片加载失败。
+ *   pages/edit/static/ticket-scribble.png → 请求 404/500 → 图片加载失败。
  * 真机返回的临时路径（wxfile:// 等）不含 static 段，会原样返回。
  */
 export function normalizeImageInfoPath(path) {
@@ -194,11 +193,10 @@ function paintTicket(ctx, fields, imgs, draw) {
   }
   y += T.bodyMB - T.paraGap
 
-  // 元数据三行
+  // 元数据两行：DATE / BY
   const meta = [
     ['DATE', String(fields.date || '')],
     ['BY', String(fields.author || '')],
-    ['TOTAL', `${fields.totalMemos} MEMOS · ${fields.totalDays} DAYS`],
   ]
   const metaRows = []
   for (const [k, v] of meta) {
@@ -412,112 +410,6 @@ function paintGlow(ctx, fields, imgs, draw) {
   return height
 }
 
-/* ---------- 流线渐变卡 ---------- */
-
-const WAVE = {
-  w: 480,
-  minH: 896,
-  bg: '#f66b61',
-  pageBg: '#f66b61',
-  frameX: 45,
-  frameY: 332,
-  frameW: 390,
-  frameMinH: 226,
-  frameBottom: 338,
-  framePadX: 22,
-  framePadY: 30,
-  frameRadius: 18,
-  frameLine: 4,
-  titleSize: 38,
-  titleLH: 46,
-  bodySize: 31,
-  bodyLH: 32,
-  titleBodyGap: 2,
-  textOffsetY: -6,
-}
-
-const WAVE_FONT = 'Georgia, "Times New Roman", "Songti SC", serif'
-
-function waveTextLines(ctx, text, maxWidth) {
-  return String(text || '')
-    .split('\n')
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .flatMap((line) => wrapRich(ctx, line, maxWidth))
-}
-
-export function measureWaveLayout(ctx, fields) {
-  const textWidth = WAVE.frameW - WAVE.framePadX * 2
-  setFont(ctx, 700, WAVE.titleSize, WAVE_FONT)
-  const titleLines = waveTextLines(ctx, fields.title, textWidth)
-  setFont(ctx, 400, WAVE.bodySize, WAVE_FONT)
-  const contentLines = waveTextLines(ctx, fields.content, textWidth)
-  const blockHeight =
-    titleLines.length * WAVE.titleLH +
-    (titleLines.length && contentLines.length ? WAVE.titleBodyGap : 0) +
-    contentLines.length * WAVE.bodyLH
-  const frameHeight = Math.max(WAVE.frameMinH, blockHeight + WAVE.framePadY * 2)
-  const height = Math.max(WAVE.minH, WAVE.frameY + frameHeight + WAVE.frameBottom)
-  return {
-    width: WAVE.w,
-    height,
-    frameX: WAVE.frameX,
-    frameY: WAVE.frameY,
-    frameWidth: WAVE.frameW,
-    frameHeight,
-    blockHeight,
-    titleLines,
-    contentLines,
-  }
-}
-
-function paintWave(ctx, fields, imgs, draw) {
-  const layout = measureWaveLayout(ctx, fields)
-  if (!draw) return layout.height
-
-  ctx.fillStyle = WAVE.bg
-  ctx.fillRect(0, 0, WAVE.w, layout.height)
-  if (imgs.waveBg) {
-    ctx.drawImage(imgs.waveBg, 0, 0, WAVE.w, layout.height)
-  }
-
-  ctx.save()
-  ctx.strokeStyle = 'rgba(255, 250, 240, 0.96)'
-  ctx.lineWidth = WAVE.frameLine
-  roundRect(
-    ctx,
-    layout.frameX,
-    layout.frameY,
-    layout.frameWidth,
-    layout.frameHeight,
-    WAVE.frameRadius
-  )
-  ctx.stroke()
-  ctx.restore()
-
-  const blockTop =
-    layout.frameY + (layout.frameHeight - layout.blockHeight) / 2 + WAVE.textOffsetY
-  ctx.textAlign = 'center'
-  ctx.textBaseline = 'alphabetic'
-  ctx.fillStyle = '#fffaf0'
-
-  setFont(ctx, 700, WAVE.titleSize, WAVE_FONT)
-  let y = blockTop
-  for (const line of layout.titleLines) {
-    ctx.fillText(line, WAVE.w / 2, y + WAVE.titleSize)
-    y += WAVE.titleLH
-  }
-
-  if (layout.titleLines.length && layout.contentLines.length) y += WAVE.titleBodyGap
-  setFont(ctx, 400, WAVE.bodySize, WAVE_FONT)
-  for (const line of layout.contentLines) {
-    ctx.fillText(line, WAVE.w / 2, y + WAVE.bodySize)
-    y += WAVE.bodyLH
-  }
-  ctx.textAlign = 'left'
-  return layout.height
-}
-
 function roundRect(ctx, x, y, w, h, r) {
   ctx.beginPath()
   ctx.moveTo(x + r, y)
@@ -544,15 +436,6 @@ const PAINTERS = {
     painter: paintGlow,
     assets: ['icon'],
     requiredAssets: [],
-  },
-  wave: {
-    width: WAVE.w,
-    pageBg: WAVE.pageBg,
-    // 流线背景是满版渐变；纯色留边会在静态 PNG 上形成矩形边框。
-    pagePad: 0,
-    painter: paintWave,
-    assets: ['waveBg'],
-    requiredAssets: ['waveBg'],
   },
 }
 

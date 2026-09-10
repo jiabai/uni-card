@@ -23,7 +23,7 @@
       </view>
     </view>
 
-    <!-- ========== 元数据区 DATE / BY / TOTAL ========== -->
+    <!-- ========== 元数据区 DATE / BY ========== -->
     <view class="meta-area">
       <view class="meta-row">
         <text class="meta-key">DATE</text>
@@ -34,11 +34,6 @@
         <text class="meta-key">BY</text>
         <view class="meta-dashes"></view>
         <text class="meta-val">{{ author }}</text>
-      </view>
-      <view class="meta-row">
-        <text class="meta-key">TOTAL</text>
-        <view class="meta-dashes"></view>
-        <text class="meta-val">{{ totalMemos }} MEMOS · {{ totalDays }} DAYS</text>
       </view>
     </view>
 
@@ -79,16 +74,6 @@ const props = defineProps({
   author: {
     type: String,
     default: '',
-  },
-  /** TOTAL MEMOS 数量 */
-  totalMemos: {
-    type: [String, Number],
-    default: '0',
-  },
-  /** TOTAL DAYS 天数 */
-  totalDays: {
-    type: [String, Number],
-    default: '0',
   },
 })
 
@@ -234,7 +219,7 @@ const parsedParagraphs = computed(() => {
   color: #262626;
 }
 
-/* ---------- 元数据区：DATE / BY / TOTAL ---------- */
+/* ---------- 元数据区：DATE / BY ---------- */
 .meta-area {
   display: flex;
   flex-direction: column;

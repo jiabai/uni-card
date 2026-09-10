@@ -2,7 +2,7 @@
   "id": "uni-ticket-card",
   "displayName": "票根便签卡",
   "version": "1.0.0",
-  "description": "复刻票根风便签卡（uni-app Vue3）：打孔毛边、ticket 品牌头、段首自动加粗标签、DATE/BY/TOTAL 元数据、手绘涂鸦分隔线、条形码。零依赖。",
+  "description": "复刻票根风便签卡（uni-app Vue3）：打孔毛边、ticket 品牌头、段首自动加粗标签、DATE/BY 元数据、手绘涂鸦分隔线、条形码。零依赖。",
   "keywords": [
     "ticket",
     "card",

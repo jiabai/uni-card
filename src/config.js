@@ -14,8 +14,6 @@
 export const ticketConfig = {
   date: '28 / 8, 2026',
   author: '你的昵称',
-  totalMemos: '421',
-  totalDays: '1841',
   content:
     '初来乍到：个人开发者，利用业余时间做点小工具\n' +
     '产品设计：从用户视角出发，把复杂的事情变简单\n' +
@@ -36,16 +34,9 @@ export const glowConfig = {
   qrText: 'https://example.com/glow-card',
 }
 
-/* ========== 流线渐变卡配置 ========== */
-export const waveConfig = {
-  title: 'Lorem Ipsum',
-  content: 'is simply dummy text\nof the printing and\ntypesetting industry',
-}
-
 export const TEMPLATE_DEFAULTS = {
   ticket: ticketConfig,
   glow: glowConfig,
-  wave: waveConfig,
 }
 
 export const TEMPLATE_EDITOR_ROWS = {
@@ -60,10 +51,6 @@ export const TEMPLATE_EDITOR_ROWS = {
     ],
     [{ key: 'date', type: 'input', label: 'DATE', placeholder: '如 28 / 8, 2026' }],
     [{ key: 'author', type: 'input', label: 'BY / author', placeholder: '如 你的昵称' }],
-    [
-      { key: 'totalMemos', type: 'input', label: 'TOTAL MEMOS', placeholder: '如 421' },
-      { key: 'totalDays', type: 'input', label: 'TOTAL DAYS', placeholder: '如 1841' },
-    ],
   ],
   glow: [
     [
@@ -85,17 +72,6 @@ export const TEMPLATE_EDITOR_ROWS = {
         placeholder: '留空则不显示二维码',
       },
     ],
-  ],
-  wave: [
-    [
-      {
-        key: 'content',
-        type: 'textarea',
-        label: '正文 CONTENT（换行分段落）',
-        placeholder: '每行一段',
-      },
-    ],
-    [{ key: 'title', type: 'input', label: '标题 title', placeholder: '卡片标题' }],
   ],
 }
 
