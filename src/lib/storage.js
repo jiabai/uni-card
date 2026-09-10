@@ -2,9 +2,10 @@
  * 本地存储封装
  *
  * 键系（V3.7 统一 unicard_* 前缀）：
- *   unicard_config —— 各模板编辑中的配置（草稿），含身份绑定素材 id
+ *   unicard_config —— 各模板编辑中的配置（草稿）
  *   unicard_mine   —— 昵称、统计开关、最近使用模板 id
  *   unicard_library —— 素材数组（04 工单启用）
+ *   unicard_binding —— 身份绑定（草稿 ↔ 素材 id，独立键）
  *
  * 存量迁移：旧键 uni-card-demo-config 首次读取时一次性搬入
  * unicard_config（内部键 ticket / glow 不变），此后旧键不再生效。
