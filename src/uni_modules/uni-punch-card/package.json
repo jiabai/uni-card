@@ -1,0 +1,20 @@
+{
+  "id": "uni-punch-card",
+  "displayName": "醒目大字卡",
+  "version": "1.0.0",
+  "description": "醒目大字风格的内容卡片组件（uni-app Vue3）。橙底纯黑卡面，超大粗体正文，`**文字**` 标记的重点自动换高亮色。",
+  "keywords": [
+    "punch",
+    "card",
+    "卡片",
+    "醒目",
+    "大字",
+    "uni-app",
+    "vue3",
+    "component"
+  ],
+  "uni_modules": {
+    "dependencies": {}
+  },
+  "dependencies": {}
+}

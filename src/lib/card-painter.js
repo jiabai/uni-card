@@ -9,6 +9,7 @@
  */
 import { qrTextToDataURL } from './qr-png.js'
 import { GLOW_BICYCLE_ICON } from './glow-icon.js'
+import { parseHighlightLines } from './highlight.js'
 
 const SCALE = 2 // 高清倍率
 const PAGE_PAD = 24 // 导出图四周留边（页面背景色）
@@ -420,6 +421,104 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.closePath()
 }
 
+/* ---------- 醒目大字卡 ---------- */
+
+const P = {
+  w: 480, padX: 39, padY: 158, radius: 34, minH: 656,
+  // 橙底 → 页面背景；纯黑卡面。两者对比极大，卡边天然清晰，无需靠色差做层次。
+  // 不加阴影是刻意的：导出成静态 PNG 后阴影本就不可见，预览若加阴影，
+  // 「页面底色与卡片交界」的观感会与导出图不一致（同 glow 留边问题的教训）。
+  bg: '#000000', pageBg: '#feab75', pagePad: 19,
+  size: 58, weight: 900, lineHeight: 85, color: '#ffffff', hl: '#fe9a64',
+}
+
+const ASCII_ALNUM = /[0-9A-Za-z]/
+
+/**
+ * 富文本换行：片段数组 → 视觉行数组（每行仍是片段数组）。
+ *
+ * 高亮只改颜色、不改字宽，因此按纯文本量一次宽度即可，样式在断行之后再合并回来。
+ * 与 ticket/glow 的 wrapRich 不同，这里对 ASCII 字母数字做了整体性保护：
+ * 断行点落在英文/数字中间时，整段（连续 ASCII 单词）挪到下一行。
+ */
+function wrapPunch(ctx, segments, maxWidth) {
+  const chars = []
+  for (const seg of segments) {
+    for (const ch of seg.text) chars.push({ ch, hl: seg.hl, w: ctx.measureText(ch).width })
+  }
+
+  const lines = []
+  let cur = []
+  let width = 0
+
+  for (const item of chars) {
+    if (cur.length && width + item.w > maxWidth) {
+      let cut = cur.length
+      if (ASCII_ALNUM.test(item.ch)) {
+        while (cut > 0 && ASCII_ALNUM.test(cur[cut - 1].ch)) cut--
+      }
+      if (cut === 0) cut = cur.length // 单个超长单词：只能硬断
+      lines.push(cur.slice(0, cut))
+      cur = cur.slice(cut)
+      width = cur.reduce((sum, c) => sum + c.w, 0)
+    }
+    cur.push(item)
+    width += item.w
+  }
+  if (cur.length) lines.push(cur)
+
+  return lines.map(mergeHighlight)
+}
+
+/** 相邻同色字符合并回片段，减少一次绘制里的 fillText 调用次数 */
+function mergeHighlight(items) {
+  const out = []
+  for (const item of items) {
+    const last = out[out.length - 1]
+    if (last && last.hl === item.hl) last.text += item.ch
+    else out.push({ text: item.ch, hl: item.hl })
+  }
+  return out
+}
+
+function paintPunch(ctx, fields, imgs, draw) {
+  const contentW = P.w - P.padX * 2
+
+  setFont(ctx, P.weight, P.size)
+  // flatMap：wrapPunch 返回的是「视觉行 → 片段」两层，一个源行可能折成多个视觉行，
+  // 这里必须展平成「视觉行 → 片段」，否则多嵌套一层会让 seg.text 恒为 undefined
+  // （真实 canvas 会老老实实画出四个 "undefined"）。
+  const laid = parseHighlightLines(fields.content).flatMap((segs) => wrapPunch(ctx, segs, contentW))
+  const blockH = laid.length * P.lineHeight
+  // 内容少 → 保持 480×656 的固定比例，正文垂直居中；内容多 → 卡片跟着长高
+  const height = Math.max(P.minH, blockH + P.padY * 2)
+  if (!draw) return height
+
+  // 纯黑圆角卡面
+  ctx.fillStyle = P.bg
+  roundRect(ctx, 0, 0, P.w, height, P.radius)
+  ctx.fill()
+
+  const top = (height - blockH) / 2
+  ctx.save()
+  // 用 middle 基线做垂直居中：CJK 字面即 em 方框，比手算 alphabetic 偏移更稳
+  ctx.textBaseline = 'middle'
+  ctx.textAlign = 'left'
+  setFont(ctx, P.weight, P.size)
+
+  for (let i = 0; i < laid.length; i++) {
+    const centerY = top + i * P.lineHeight + P.lineHeight / 2
+    let x = P.padX
+    for (const seg of laid[i]) {
+      ctx.fillStyle = seg.hl ? P.hl : P.color
+      ctx.fillText(seg.text, x, centerY)
+      x += ctx.measureText(seg.text).width
+    }
+  }
+  ctx.restore()
+  return height
+}
+
 /* ---------- 对外入口 ---------- */
 
 const PAINTERS = {
@@ -435,6 +534,14 @@ const PAINTERS = {
     pageBg: G.pageBg,
     painter: paintGlow,
     assets: ['icon'],
+    requiredAssets: [],
+  },
+  punch: {
+    width: P.w,
+    pageBg: P.pageBg,
+    pagePad: P.pagePad,
+    painter: paintPunch,
+    assets: [],
     requiredAssets: [],
   },
 }

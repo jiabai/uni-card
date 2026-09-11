@@ -20,6 +20,13 @@ export const TEMPLATES = [
     thumb: '/static/templates/glow-thumb.png',
     theme: '#111112',
   },
+  {
+    id: 'punch',
+    name: '醒目大字卡',
+    comp: 'uni-punch-card',
+    thumb: '/static/templates/punch-thumb.png',
+    theme: '#feab75',
+  },
 ]
 
 export const DEFAULT_TEMPLATE_ID = 'ticket'

@@ -7,6 +7,9 @@
  *
  * glowConfig   —— 给 <uni-glow-card> 用
  *   （流光卡片：深色日系圆角卡片）
+ *
+ * punchConfig  —— 给 <uni-punch-card> 用
+ *   （醒目大字卡：橙底纯黑卡 + 超大粗体字，**文字** 为高亮重点）
  * ─────────────────────────────────────────────
  */
 
@@ -34,9 +37,15 @@ export const glowConfig = {
   qrText: 'https://example.com/glow-card',
 }
 
+/* ========== 醒目大字卡配置 ========== */
+export const punchConfig = {
+  content: '把想说的话\n**变成一张**\n好看的卡片\n发出去吧',
+}
+
 export const TEMPLATE_DEFAULTS = {
   ticket: ticketConfig,
   glow: glowConfig,
+  punch: punchConfig,
 }
 
 export const TEMPLATE_EDITOR_ROWS = {
@@ -70,6 +79,16 @@ export const TEMPLATE_EDITOR_ROWS = {
         type: 'input',
         label: '二维码扫码内容 qrText',
         placeholder: '留空则不显示二维码',
+      },
+    ],
+  ],
+  punch: [
+    [
+      {
+        key: 'content',
+        type: 'textarea',
+        label: '正文 CONTENT（换行分句；`**文字**` 圈出的部分换高亮色）',
+        placeholder: '每行一句，用 ** ** 圈出重点',
       },
     ],
   ],

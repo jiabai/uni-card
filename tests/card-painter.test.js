@@ -41,4 +41,11 @@ describe('包内图片路径还原', () => {
       pageBg: '#1a1a1c',
     })
   })
+
+  it('醒目大字卡的 painter 注册项（橙底，与流光卡同宽 480）', () => {
+    expect(painter.getPainterSpec('punch')).toEqual({
+      width: 480,
+      pageBg: '#feab75',
+    })
+  })
 })

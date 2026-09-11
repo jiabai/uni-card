@@ -13,6 +13,7 @@
     :sign="fields.sign"
     :qr-text="fields.qrText"
   />
+  <uni-punch-card v-else-if="templateId === 'punch'" :content="fields.content" />
 </template>
 
 <script setup>
