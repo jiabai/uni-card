@@ -36,7 +36,7 @@
             :class="{ 'is-warn': capacityWarn, 'is-over': capacity && capacity.over }"
           >{{ capacityText }}</text>
           <input
-            v-else
+            v-if="field.type !== 'textarea'"
             v-model="drafts[currentId][field.key]"
             class="f-input"
             maxlength="100000"
