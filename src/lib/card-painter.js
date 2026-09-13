@@ -10,6 +10,8 @@
 import { qrTextToDataURL } from './qr-png.js'
 import { GLOW_BICYCLE_ICON } from './glow-icon.js'
 import { parseHighlightLines } from './highlight.js'
+import { parseDigestLines } from './digest.js'
+import { DIGEST_BOOK_ICON } from './digest-icon.js'
 
 const SCALE = 2 // 高清倍率
 const PAGE_PAD = 24 // 导出图四周留边（页面背景色）
@@ -21,6 +23,8 @@ const ASSETS = {
   // 流光卡片自行车图标：内联 base64，走 canvas.createImage(dataURL) 直载，
   // 规避小程序 uni.getImageInfo 本地路径在部分机型/基础库下静默失败 → 自行车消失。
   icon: GLOW_BICYCLE_ICON,
+  // 深色要点卡书本图标：与流光卡同一条加载路径（内联 base64 → createImage 直载）
+  book: DIGEST_BOOK_ICON,
 }
 
 const SCHEME_RE = /^[a-z][a-z0-9+.-]*:\/\//i
@@ -89,20 +93,44 @@ function loadImage(canvas, src) {
   })
 }
 
-/* ---------- CJK 逐字符换行；返回行与 label 覆盖字符数 ---------- */
-function wrapRich(ctx, text, maxWidth) {
+/**
+ * 纯文本换行：CJK 逐字符，ASCII 字母数字整体保护（不在单词中间断开）。
+ *
+ * 组件端由 CSS 排版，浏览器与小程序对英文天然按词断行、绝不切开单词；
+ * 绘制器若逐字符断行，导出图就会与预览在断行点上分叉（长单词被切成两半），
+ * 这是用户可见的缺陷而不是风格差异。整词回退逻辑与 wrapPunch 保持同一套。
+ *
+ * firstW 用于「首行比后续行窄」的场景（加粗小标题与正文同处一行）。
+ */
+export function wrapPlain(ctx, text, firstW, restW) {
+  const chars = [...String(text)].map((ch) => ({ ch, w: ctx.measureText(ch).width }))
   const lines = []
-  let line = ''
-  for (const ch of text) {
-    if (ctx.measureText(line + ch).width > maxWidth && line) {
-      lines.push(line)
-      line = ch
-    } else {
-      line += ch
+  let cur = []
+  let width = 0
+  let limit = firstW
+  for (const item of chars) {
+    if (cur.length && width + item.w > limit) {
+      let cut = cur.length
+      if (ASCII_ALNUM.test(item.ch)) {
+        while (cut > 0 && ASCII_ALNUM.test(cur[cut - 1].ch)) cut--
+      }
+      if (cut === 0) cut = cur.length // 单个超长单词：只能硬断
+      lines.push(cur.slice(0, cut).map((c) => c.ch).join(''))
+      cur = cur.slice(cut)
+      width = cur.reduce((sum, c) => sum + c.w, 0)
+      limit = restW
     }
+    cur.push(item)
+    width += item.w
   }
-  if (line) lines.push(line)
-  return lines
+  if (cur.length) lines.push(cur.map((c) => c.ch).join(''))
+  return lines.length ? lines : ['']
+}
+
+/* ---------- CJK 逐字符换行（保留空文本 → 空数组的旧语义）；返回行与 label 覆盖字符数 ---------- */
+function wrapRich(ctx, text, maxWidth) {
+  if (!text) return []
+  return wrapPlain(ctx, text, maxWidth, maxWidth)
 }
 
 function setFont(ctx, weight, size, family) {
@@ -519,6 +547,122 @@ function paintPunch(ctx, fields, imgs, draw) {
   return height
 }
 
+/* ---------- 深色要点卡 ---------- */
+
+const D = {
+  // 全部数值按参考图折算（原图卡片 690 物理 px → 480 逻辑，比例 0.6957）
+  w: 480, padX: 40, padTop: 40, padBottom: 73, radius: 21, minH: 540,
+  // 卡面比页面底色亮一档（#2a2a2a / #171717，差 19/255），这是参考图的原始设计：
+  // 「深灰卡片浮在近黑背景上」，边界清楚可见，不是 glow 那种色差为 0 的融合方案。
+  bg: '#2a2a2a', pageBg: '#171717',
+  // 图标实测 54×43 物理 px → 37.6×30.6 逻辑，取 38×31；图标底到标题墨迹顶 21 逻辑
+  iconW: 38, iconH: 31, iconMB: 15,
+  titleSize: 22, titleMB: 21, titleWeight: 800,
+  paraSize: 20, paraLH: 26, paraWeight: 400, labelWeight: 700,
+  color: '#ffffff',
+}
+
+/**
+ * 折行后的续行不以空白开头：逐字符折行会把上一行末尾的空格甩到下一行行首，
+ * 在卡片上就是一个多余的小缩进。首行不动（小标题后的那个空格要保留）。
+ */
+function trimLead(rows) {
+  return rows.map((row, i) => (i === 0 ? row : row.replace(/^\s+/, '')))
+}
+
+/**
+ * 首行宽度可窄于后续行：用于「加粗小标题 + 正文」同处一行的折行。
+ * 小标题占了首行一截，剩下给正文的空间变小；折过一行之后又能用满整宽。
+ */
+function wrapFirstNarrow(ctx, text, firstW, restW) {
+  // 与 wrapPlain 同一套整词保护逻辑，只是首行可用宽度更窄（小标题先占了首行一截）。
+  // wrapPlain 在文本为空时返回 ['']，正好满足「只有小标题也要占一行」的需求。
+  return wrapPlain(ctx, text, firstW, restW)
+}
+
+/**
+ * 正文逐行排布：先折行，落笔阶段复用同一批结果，
+ * 保证 measure 与 draw 的推进完全一致（折行数不同会让卡片高对不上）。
+ * 小标题按加粗字宽量（真实字体的粗体比常规体宽），避免首行顶出内容宽度。
+ */
+function digestLayout(ctx, content) {
+  const contentW = D.w - D.padX * 2
+  return parseDigestLines(content).map((item) => {
+    // 空行在卡片上占整整一行高，它就是段落间距
+    if (item.blank) return { blank: true }
+
+    if (!item.label) {
+      setFont(ctx, D.paraWeight, D.paraSize)
+      return { blank: false, label: '', rows: trimLead(wrapRich(ctx, item.text, contentW)) }
+    }
+
+    const label = item.label
+    setFont(ctx, D.labelWeight, D.paraSize)
+    const labelW = ctx.measureText(label).width
+    setFont(ctx, D.paraWeight, D.paraSize)
+    return {
+      blank: false,
+      label,
+      rows: trimLead(wrapFirstNarrow(ctx, item.text, contentW - labelW, contentW)),
+    }
+  })
+}
+
+function paintDigest(ctx, fields, imgs, draw) {
+  const laid = digestLayout(ctx, fields.content)
+
+  const headerH = D.padTop + D.iconH + D.iconMB + D.titleSize + D.titleMB
+  const bodyH = laid.reduce((h, it) => h + (it.blank ? D.paraLH : it.rows.length * D.paraLH), 0)
+  // 内容少时保持 480x540 的最小比例，内容多时卡片跟着长高
+  const height = Math.max(D.minH, headerH + bodyH + D.padBottom)
+  if (!draw) return height
+
+  ctx.fillStyle = D.bg
+  roundRect(ctx, 0, 0, D.w, height, D.radius)
+  ctx.fill()
+
+  let cy = D.padTop
+  ctx.textAlign = 'left'
+  ctx.textBaseline = 'alphabetic'
+
+  // 固定图标：内联 PNG 直贴。刻意不用 emoji —— emoji 的字形与配色随系统变化
+  // （iOS 是黄书、Windows 是蓝书），无法保证各机型与设计一致。
+  if (imgs.book) ctx.drawImage(imgs.book, D.padX, cy, D.iconW, D.iconH)
+  // 图片没加载成功也照样推进光标，保证 measure 与 draw 算出的卡片高度一致
+  cy += D.iconH + D.iconMB
+
+  setFont(ctx, D.titleWeight, D.titleSize)
+  ctx.fillStyle = D.color
+  ctx.fillText(String(fields.title || ''), D.padX, cy + D.titleSize)
+  cy += D.titleSize + D.titleMB
+
+  ctx.fillStyle = D.color
+  for (const item of laid) {
+    if (item.blank) {
+      cy += D.paraLH
+      continue
+    }
+    let lineY = cy
+    for (let i = 0; i < item.rows.length; i++) {
+      let x = D.padX
+      // 加粗小标题只出现在该段的首行；折行后的续行不能重复加粗
+      if (i === 0 && item.label) {
+        setFont(ctx, D.labelWeight, D.paraSize)
+        ctx.fillText(item.label, x, lineY + D.paraSize)
+        x += ctx.measureText(item.label).width
+      }
+      const row = item.rows[i]
+      if (row) {
+        setFont(ctx, D.paraWeight, D.paraSize)
+        ctx.fillText(row, x, lineY + D.paraSize)
+      }
+      lineY += D.paraLH
+    }
+    cy += item.rows.length * D.paraLH
+  }
+  return height
+}
+
 /* ---------- 对外入口 ---------- */
 
 const PAINTERS = {
@@ -542,6 +686,13 @@ const PAINTERS = {
     pagePad: P.pagePad,
     painter: paintPunch,
     assets: [],
+    requiredAssets: [],
+  },
+  digest: {
+    width: D.w,
+    pageBg: D.pageBg,
+    painter: paintDigest,
+    assets: ['book'],
     requiredAssets: [],
   },
 }

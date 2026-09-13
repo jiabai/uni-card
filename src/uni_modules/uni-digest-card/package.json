@@ -1,0 +1,20 @@
+{
+  "id": "uni-digest-card",
+  "displayName": "深色要点卡",
+  "version": "1.0.0",
+  "description": "深色要点风格的内容卡片组件（uni-app Vue3）。近黑圆角卡面，左上角书本图标 + 标题 + 多段要点，每行「：」之前的文字自动加粗为小标题。",
+  "keywords": [
+    "digest",
+    "card",
+    "卡片",
+    "要点",
+    "深色",
+    "uni-app",
+    "vue3",
+    "component"
+  ],
+  "uni_modules": {
+    "dependencies": {}
+  },
+  "dependencies": {}
+}

@@ -19,6 +19,14 @@ describe('各模板默认内容配置（出厂示例）', () => {
     expect(typeof configs.glowConfig.qrText).toBe('string')
   })
 
+  it('深色要点卡配置为标题 + 正文两个字段，正文用空行分段', () => {
+    expect(configs.digestConfig).toHaveProperty('title')
+    expect(configs.digestConfig).toHaveProperty('content')
+    expect(Object.keys(configs.digestConfig).sort()).toEqual(['content', 'title'])
+    // 空行是段落间距的来源，出厂示例必须带上，否则用户看不出这个写法
+    expect(configs.digestConfig.content).toContain('\n\n')
+  })
+
   it('默认值映射与输入字段描述覆盖全部模板', () => {
     const ids = TEMPLATES.map((template) => template.id)
     expect(Object.keys(configs.TEMPLATE_DEFAULTS)).toEqual(ids)

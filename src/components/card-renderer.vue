@@ -14,6 +14,11 @@
     :qr-text="fields.qrText"
   />
   <uni-punch-card v-else-if="templateId === 'punch'" :content="fields.content" />
+  <uni-digest-card
+    v-else-if="templateId === 'digest'"
+    :title="fields.title"
+    :content="fields.content"
+  />
 </template>
 
 <script setup>

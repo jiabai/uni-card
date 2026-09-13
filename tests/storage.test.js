@@ -16,8 +16,8 @@ beforeEach(() => {
 })
 
 describe('模板注册表', () => {
-  it('含 ticket / glow / punch 三项，五字段完整', () => {
-    expect(TEMPLATES).toHaveLength(3)
+  it('含 ticket / glow / punch / digest 四项，五字段完整', () => {
+    expect(TEMPLATES).toHaveLength(4)
     for (const t of TEMPLATES) {
       expect(t).toHaveProperty('id')
       expect(t).toHaveProperty('name')
@@ -25,13 +25,14 @@ describe('模板注册表', () => {
       expect(t).toHaveProperty('thumb')
       expect(t).toHaveProperty('theme')
     }
-    expect(TEMPLATES.map((t) => t.id)).toEqual(['ticket', 'glow', 'punch'])
+    expect(TEMPLATES.map((t) => t.id)).toEqual(['ticket', 'glow', 'punch', 'digest'])
   })
 
   it('按 id 查询；未知 id 回退默认模板（票根卡）', () => {
     expect(getTemplate('glow').comp).toBe('uni-glow-card')
     expect(getTemplate('ticket').comp).toBe('uni-ticket-card')
     expect(getTemplate('punch').comp).toBe('uni-punch-card')
+    expect(getTemplate('digest').comp).toBe('uni-digest-card')
     expect(getTemplate('nope').id).toBe(DEFAULT_TEMPLATE_ID)
     expect(DEFAULT_TEMPLATE_ID).toBe('ticket')
   })

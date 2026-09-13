@@ -10,6 +10,9 @@
  *
  * punchConfig  —— 给 <uni-punch-card> 用
  *   （醒目大字卡：橙底纯黑卡 + 超大粗体字，**文字** 为高亮重点）
+ *
+ * digestConfig 为「深色要点卡」<uni-digest-card> 的默认配置
+ *   （近黑圆角卡 + 固定书本图标 + 标题 + 「：」前自动加粗的要点段）
  * ─────────────────────────────────────────────
  */
 
@@ -42,10 +45,23 @@ export const punchConfig = {
   content: '把想说的话\n**变成一张**\n好看的卡片\n发出去吧',
 }
 
+/* ========== 深色要点卡配置 ========== */
+export const digestConfig = {
+  title: 'Knowledge Dissemination',
+  content:
+    'Research and Publishing: Enrich the learning experience with interactive visuals that enhance understanding.\n' +
+    '\n' +
+    'Educational Materials:\n' +
+    'Produce interactive and visually appealing study aids, infographics, and presentation slides.\n' +
+    '\n' +
+    'Customer Support: Deliver customer support with clear and helpful visual FAQs and support tickets that are not only clear but also visually engaging.',
+}
+
 export const TEMPLATE_DEFAULTS = {
   ticket: ticketConfig,
   glow: glowConfig,
   punch: punchConfig,
+  digest: digestConfig,
 }
 
 export const TEMPLATE_EDITOR_ROWS = {
@@ -91,6 +107,17 @@ export const TEMPLATE_EDITOR_ROWS = {
         placeholder: '每行一句，用 ** ** 圈出重点',
       },
     ],
+  ],
+  digest: [
+    [
+      {
+        key: 'content',
+        type: 'textarea',
+        label: '正文 CONTENT（换行分行，空行拉开段距；每行冒号前自动加粗）',
+        placeholder: '每行一条要点，空一行分段',
+      },
+    ],
+    [{ key: 'title', type: 'input', label: '标题 TITLE', placeholder: '卡片标题' }],
   ],
 }
 

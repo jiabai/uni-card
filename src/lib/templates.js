@@ -27,6 +27,13 @@ export const TEMPLATES = [
     thumb: '/static/templates/punch-thumb.png',
     theme: '#feab75',
   },
+  {
+    id: 'digest',
+    name: '深色要点卡',
+    comp: 'uni-digest-card',
+    thumb: '/static/templates/digest-thumb.png',
+    theme: '#1a1a1c',
+  },
 ]
 
 export const DEFAULT_TEMPLATE_ID = 'ticket'
