@@ -30,6 +30,11 @@
             auto-height
             :placeholder="field.placeholder"
           />
+          <text
+            v-if="field.type === 'textarea' && capacity"
+            class="f-count"
+            :class="{ 'is-warn': capacityWarn, 'is-over': capacity && capacity.over }"
+          >{{ capacityText }}</text>
           <input
             v-else
             v-model="drafts[currentId][field.key]"
@@ -62,6 +67,7 @@ import { loadDrafts as loadDraftsSaved, saveDrafts, setBoundMemoId } from '../..
 import { getTopbarStyle } from '../../lib/navbar.js'
 import { upsertMemo } from '../../lib/memos.js'
 import { exportCardImage } from '../../lib/card-export.js'
+import { getCapacity } from '../../lib/capacity.js'
 
 // 自定义导航栏：按微信胶囊按钮几何预留右侧占位（reserveRight=true，本页右侧有出图钮）
 const topbarStyle = getTopbarStyle(true)
@@ -80,6 +86,22 @@ const currentId = ref('ticket')
 const currentName = computed(() => getTemplate(currentId.value).name)
 const theme = computed(() => getTemplate(currentId.value).theme)
 const editorRows = computed(() => TEMPLATE_EDITOR_ROWS[currentId.value] || [])
+
+// 容量提示：只给大字卡（字号 58，一行只放得下 6 个汉字，最容易写超）。
+// 其余模板返回 null，编辑页不显示计数。
+const capacity = computed(() =>
+  getCapacity(currentId.value, (drafts.value[currentId.value] || {}).content)
+)
+const capacityText = computed(() => {
+  const c = capacity.value
+  if (!c) return ''
+  if (c.over) return `已超 ${-c.remain} 行，出图会失败`
+  return `还能写 ${c.remain} 行`
+})
+// 剩 3 行以内转橙色：给用户一个「快到顶了」的缓冲，不要等到红了才发现
+const capacityWarn = computed(
+  () => !!capacity.value && !capacity.value.over && capacity.value.remain <= 3
+)
 
 // 主题明暗（按亮度阈值判定）：深色主题下顶栏文字换浅色
 const isDarkTheme = computed(() => {
@@ -147,6 +169,11 @@ async function onShareTap() {
   const fields = drafts.value[id]
   if (!fields || !String(fields.content || '').trim()) {
     uni.showToast({ title: '先写点内容吧', icon: 'none' })
+    return
+  }
+  // 提前拦下过长内容：省掉一次注定失败的绘制与等待
+  if (capacity.value && capacity.value.over) {
+    uni.showToast({ title: '内容过长，请精简后再出图', icon: 'none' })
     return
   }
 
@@ -250,6 +277,17 @@ async function onShareTap() {
   color: #222;
   box-sizing: border-box;
 }
+.f-count {
+  font-size: 12px;
+  color: #999;
+  text-align: right;
+}
+.f-count.is-warn {
+  color: #c47a1a;
+}
+.f-count.is-over {
+  color: #c0392b;
+}
 .editor-foot {
   display: flex;
   align-items: center;
@@ -310,6 +348,9 @@ async function onShareTap() {
   padding: 20rpx 24rpx;
   border-radius: 20rpx;
   font-size: 28rpx;
+}
+.f-count {
+  font-size: 24rpx;
 }
 .editor-foot {
   gap: 24rpx;

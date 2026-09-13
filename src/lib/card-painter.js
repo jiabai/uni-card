@@ -13,7 +13,9 @@ import { parseHighlightLines } from './highlight.js'
 import { parseDigestLines } from './digest.js'
 import { DIGEST_BOOK_ICON } from './digest-icon.js'
 
-const SCALE = 2 // 高清倍率
+export const SCALE = 2 // 高清倍率
+/** 导出画布单边物理像素上限：canvas 画不出更大的图，paintCard 会返回 overflow */
+export const CANVAS_MAX = 4096
 const PAGE_PAD = 24 // 导出图四周留边（页面背景色）
 
 /* ---------- 装饰资产 ---------- */
@@ -456,7 +458,7 @@ function roundRect(ctx, x, y, w, h, r) {
 
 /* ---------- 醒目大字卡 ---------- */
 
-const P = {
+export const P = {
   w: 480, padX: 39, padY: 158, radius: 34, minH: 656,
   // 橙底 → 页面背景；纯黑卡面。两者对比极大，卡边天然清晰，无需靠色差做层次。
   // 不加阴影是刻意的：导出成静态 PNG 后阴影本就不可见，预览若加阴影，
@@ -753,7 +755,7 @@ export async function paintCard(canvas, templateId, fields) {
 
   // 第一遍：measure（临时大画布尺寸）
   canvas.width = 2048
-  canvas.height = 4096
+  canvas.height = CANVAS_MAX
   ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0) // 逻辑坐标系 ×SCALE 输出
   ctx.textBaseline = 'alphabetic'
   const logicalH = painter(ctx, fields, imgs, false)
@@ -761,7 +763,7 @@ export async function paintCard(canvas, templateId, fields) {
   const pagePad = entry.pagePad ?? PAGE_PAD
   const outputWidth = entry.width + pagePad * 2
   const H = logicalH + pagePad * 2
-  if (H * SCALE > 4096) return { overflow: true }
+  if (H * SCALE > CANVAS_MAX) return { overflow: true }
 
   // 第二遍：正式尺寸落笔（重设尺寸清空画布，重置 transform）
   canvas.width = outputWidth * SCALE
