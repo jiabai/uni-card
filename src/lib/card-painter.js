@@ -261,9 +261,14 @@ function paintTicket(ctx, fields, imgs, draw) {
 
   for (const item of laid) {
     let lineY = cy
+    let done = 0
     for (const line of item.lines) {
-      const boldPart = item.labelLen > 0 ? line.slice(0, item.labelLen) : ''
-      const rest = item.labelLen > 0 ? line.slice(item.labelLen) : line
+      // 加粗只覆盖「标签：」在原文中的那一段字符；按行累计偏移，续行不再重复加粗
+      // （组件侧同样只有 label 是粗体，两侧必须同口径，否则预览与导出不一致）。
+      const boldN = Math.min(Math.max(item.labelLen - done, 0), line.length)
+      const boldPart = boldN > 0 ? line.slice(0, boldN) : ''
+      const rest = boldN > 0 ? line.slice(boldN) : line
+      done += line.length
       let x = T.padX
       if (boldPart) {
         setFont(ctx, 700, T.paraSize)
