@@ -59,7 +59,9 @@ function onPick(id) {
   /* 顶部留白交由顶栏的 statusBarHeight 垫高统一处理，与输入/预览页对齐 */
   padding: 0 24px 56px;
   box-sizing: border-box;
-  background: #efeadf;
+  /* 暖灰底：比票根卡面 #f2efe5 深一档，浅色卡得以浮出；
+     与票根卡编辑页 theme 同色，点进去背景无缝衔接 */
+  background: #e6e1d3;
 }
 
 /* 模板陈列：单列大图 */
