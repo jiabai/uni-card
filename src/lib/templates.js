@@ -42,3 +42,15 @@ export const DEFAULT_TEMPLATE_ID = 'ticket'
 export function getTemplate(id) {
   return TEMPLATES.find((t) => t.id === id) || TEMPLATES.find((t) => t.id === DEFAULT_TEMPLATE_ID)
 }
+
+/**
+ * 按最近使用的模板 id 重排陈列顺序：命中项置顶，其余保持注册表原顺序。
+ *
+ * 只返回新数组，不改动 TEMPLATES 常量，故注册表顺序在任何时刻都是稳定的默认顺序。
+ * 命中项已居首或未命中时原样返回，避免无谓的数组重建（选择页每次 onShow 都会重算）。
+ */
+export function orderByRecent(templateId) {
+  const idx = TEMPLATES.findIndex((t) => t.id === templateId)
+  if (idx <= 0) return TEMPLATES
+  return [TEMPLATES[idx], ...TEMPLATES.filter((t) => t.id !== templateId)]
+}

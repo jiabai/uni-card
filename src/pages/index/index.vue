@@ -7,7 +7,7 @@
       <view class="uc-topbar-side"></view>
     </view>
 
-    <!-- 模板缩略图陈列：双列网格，点选即进入输入页 -->
+    <!-- 模板缩略图陈列：单列大图，最近使用置顶，点选即进入输入页 -->
     <view class="tpl-grid">
       <view v-for="tpl in templates" :key="tpl.id" class="tpl-item" @click="onPick(tpl.id)">
         <view class="tpl-thumb-wrap">
@@ -23,18 +23,20 @@
 
 <script setup>
 import { onShow } from '@dcloudio/uni-app'
-import { ref } from 'vue'
-import { TEMPLATES, getTemplate } from '../../lib/templates.js'
+import { computed, ref } from 'vue'
+import { getTemplate, orderByRecent } from '../../lib/templates.js'
 import { getLastTemplateId, setLastTemplateId } from '../../lib/storage.js'
 import { getTopbarStyle } from '../../lib/navbar.js'
 
 // 自定义导航栏：统一度量（reserveRight=false，本页右侧无自定义控件，标题保持屏幕居中）
 const topbarStyle = getTopbarStyle(false)
 
-const templates = TEMPLATES
-
-// 「最近」角标：unicard_mine 仅作标记，不驱动默认选中（ADR 0003）
+// 「最近」角标：unicard_mine 仅作标记，不驱动默认选中（ADR 0003 决策 5）
 const recentId = ref(getTemplate(getLastTemplateId()).id)
+
+// 最近使用的模板置顶陈列：只重排展示顺序，不改变选中态，也不预设默认模板
+// （ADR 0005 修订 0003 决策 5 中「仅作角标」的表述）
+const templates = computed(() => orderByRecent(recentId.value))
 
 onShow(() => {
   // 自输入页返回时刷新角标（用户可能改选了别的模板）
@@ -60,11 +62,11 @@ function onPick(id) {
   background: #efeadf;
 }
 
-/* 模板陈列：双列网格 */
+/* 模板陈列：单列大图 */
 .tpl-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  grid-template-columns: 1fr;
+  gap: 24px;
 }
 .tpl-item {
   display: flex;
@@ -78,23 +80,23 @@ function onPick(id) {
   justify-content: center;
 }
 .tpl-thumb {
-  width: 150px;
-  height: 200px;
-  border-radius: 14px;
+  width: 100%;
+  height: 436px;
+  border-radius: 20px;
   background: rgba(255, 255, 255, 0.5);
   border: 1px solid rgba(0, 0, 0, 0.06);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
 }
 .tpl-badge {
   position: absolute;
-  top: 8px;
+  top: 12px;
   left: 50%;
   transform: translateX(-50%);
-  padding: 3px 10px;
-  border-radius: 10px;
+  padding: 4px 12px;
+  border-radius: 12px;
   background: rgba(31, 31, 31, 0.85);
   color: #f2efe5;
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .page-hint {
@@ -110,19 +112,19 @@ function onPick(id) {
   padding: 0 48rpx 112rpx;
 }
 .tpl-grid {
-  gap: 32rpx;
+  gap: 48rpx;
 }
 .tpl-thumb {
-  width: 300rpx;
-  height: 400rpx;
-  border-radius: 28rpx;
+  width: 100%;
+  height: 872rpx;
+  border-radius: 40rpx;
   border-width: 2rpx;
 }
 .tpl-badge {
-  top: 16rpx;
-  padding: 6rpx 20rpx;
-  border-radius: 20rpx;
-  font-size: 22rpx;
+  top: 24rpx;
+  padding: 8rpx 24rpx;
+  border-radius: 24rpx;
+  font-size: 24rpx;
 }
 .page-hint {
   margin-top: 56rpx;
