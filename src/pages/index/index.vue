@@ -11,7 +11,7 @@
     <view class="tpl-grid">
       <view v-for="tpl in templates" :key="tpl.id" class="tpl-item" @click="onPick(tpl.id)">
         <view class="tpl-thumb-wrap">
-          <image class="tpl-thumb" :src="tpl.thumb" mode="aspectFit" />
+          <image class="tpl-thumb" :src="tpl.thumb" mode="widthFix" />
           <view v-if="tpl.id === recentId" class="tpl-badge">最近</view>
         </view>
       </view>
@@ -64,7 +64,10 @@ function onPick(id) {
   background: #e6e1d3;
 }
 
-/* 模板陈列：单列大图 */
+/* 模板陈列：单列大图，等宽陈列。
+   四张卡的宽高比跨度很大（票根 0.54 至 要点 0.90），若统一装进 3:4 框等比缩放，
+   显示尺寸会明显不齐（最窄 470rpx 对最宽 654rpx，差 39%）。改为每张铺满内容区
+   宽度、高度随卡片自身比例，四张左右边缘严格对齐；一个像素都不裁。 */
 .tpl-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -83,7 +86,7 @@ function onPick(id) {
 }
 .tpl-thumb {
   width: 100%;
-  height: 436px;
+  height: auto;
   border-radius: 20px;
   background: rgba(255, 255, 255, 0.5);
   border: 1px solid rgba(0, 0, 0, 0.06);
@@ -118,7 +121,7 @@ function onPick(id) {
 }
 .tpl-thumb {
   width: 100%;
-  height: 872rpx;
+  height: auto;
   border-radius: 40rpx;
   border-width: 2rpx;
 }
